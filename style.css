@@ -1,0 +1,54 @@
+body {
+  background-color: pink;
+}
+
+ul,
+li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+.createBtn {
+  cursor: pointer;
+}
+
+.content {
+  position: relative;
+}
+
+.itemLists {
+  position: relative;
+}
+
+.stickerBoard {
+  position: absolute;
+  width: 300px;
+  min-height: 150px;
+  border-radius: 8px;
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+.stickerTitle {
+  color: white;
+}
+
+.itemList {
+  width: 250px;
+  height: 40px;
+  margin: 10px 0;
+  background-color: rgb(201, 201, 201);
+}
+
+.itemDiv {
+  display: flex;
+}
+
+.stickerLists {
+  /* background-color: rgb(232, 232, 232); */
+}

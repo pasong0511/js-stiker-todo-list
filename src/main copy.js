@@ -245,7 +245,7 @@ class ItemList {
 
 
     itemlist.classList.add("draggable")
-    itemTitleEl.innerText = `${this.itemText ? this.itemText : this.listNum}`;
+    itemTitleEl.innerText = `${this.itemText ? this.itemText : 'empty'}`;
     itemlist.style.zIndex = 1;
     delBtn.innerText = `삭제`;
 
@@ -330,8 +330,16 @@ class ItemList {
 
       const clinetReact = draggingEle.getBoundingClientRect();   //드래그한 엘리먼트 위치 저장
 
+      // shiftX = event.pageX - rect.left;
+      // shiftY = event.pageY - rect.top;
+
       shiftX = event.clientX - clinetReact.x;
       shiftY = event.clientY - clinetReact.y;
+
+      // console.log("draggingEle", clinetReact)
+      // console.log("이벤트", event.pageX, event.pageY)
+      // console.log("레프트 탑", clinetReact.left, clinetReact.top)
+      // console.log("시프트", shiftX, shiftY)
 
       document.addEventListener('mousemove', mouseMoveHandler);
       document.addEventListener('mouseup', mouseUpHandler);

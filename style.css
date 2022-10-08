@@ -39,16 +39,46 @@ button {
 }
 
 .itemList {
+  /* position: absolute; */
   width: 250px;
   height: 40px;
   margin: 10px 0;
-  background-color: rgb(201, 201, 201);
+  background-color: rgb(255, 172, 172);
+  z-index: 1;
 }
 
-.itemDiv {
+
+.stickerTop {
+  margin-top: 18px;
+  margin-left: 18px;
+}
+
+.stickerBottom {
+  margin-top: 18px;
+  margin-left: 18px;
+}
+
+.placeholder {
+  background-color: #edf2f7;
+  border: 2px dashed #cbd5e0;
+  margin-bottom: 1rem;
+}
+
+
+.draggable {
+  cursor: move;
+  margin-bottom: 1rem;
+  user-select: none;
+
+  /* Center the content */
+  align-items: center;
   display: flex;
-}
+  justify-content: center;
 
-.stickerLists {
-  /* background-color: rgb(232, 232, 232); */
+  /* Size */
+  height: 4rem;
+  width: 16rem;
+
+  /* Misc */
+  border: 1px solid #cbd5e0;
 }

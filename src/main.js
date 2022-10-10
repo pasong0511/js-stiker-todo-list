@@ -46,7 +46,7 @@ class Draggable {
     this.shiftX = 0; //드래그 엘리먼트의 마우스 현재 포지션 저장
     this.shiftY = 0;
 
-    //this 바인딩
+    //this 바인딩 -> Draggable
     this.mouseMoveHandler = this.mouseMoveHandler.bind(this);
     this.mouseUpHandler = this.mouseUpHandler.bind(this);
     this.mouseDownHandler = this.mouseDownHandler.bind(this);
@@ -245,6 +245,16 @@ class Sticker extends Draggable {
     targetTitleText.hidden = true; //원본 숨김
   }
 
+  //스티커 삭제
+  deleteSticker(event) {
+    event.stopPropagation();
+    event.target.parentNode.parentNode.remove(); //스티커 엘리먼트 삭제
+    //스티커 root 데이터 딕셔너리에서 삭제
+    this.root.dataDic = Object.values(this.root.dataDic).filter(
+      ({ element }) => element !== event.target.parentNode.parentNode
+    );
+  }
+
   //스티커 엘리먼트 생성
   createSticker() {
     const stickerTopEl = createEl("div", "stickerTop");
@@ -294,7 +304,7 @@ class Sticker extends Draggable {
 
       //제거 버튼 클릭
       if (event.target.className === "stickerRemoveBtn") {
-        console.log("투두 삭제");
+        this.deleteSticker(event);
       }
     });
     this.setVertical(false);
@@ -357,7 +367,6 @@ class Todo extends Draggable {
     });
 
     modalEl.addEventListener("click", (event) => {
-      console.log(event);
       modalArea.remove();
       modalEl.classList.remove("isActive");
     });
@@ -371,6 +380,17 @@ class Todo extends Draggable {
       modalArea.remove();
       modalEl.classList.remove("isActive");
     });
+  }
+
+  //투두 아이템 삭제
+  deleteTodoItem(event) {
+    event.stopPropagation();
+    event.target.parentNode.parentNode.remove(); //투투 아이템 엘리먼트 삭제
+
+    //스티커의 투두 리스트 데이터 배열에서 삭제
+    this.parent.todoList = this.parent.todoList.filter(
+      ({ element }) => element !== event.target.parentNode.parentNode
+    );
   }
 
   createTodoItem() {
@@ -387,9 +407,16 @@ class Todo extends Draggable {
     itemArea.appendChild(delBtn);
     this.element.appendChild(itemArea);
     this.parent.element.lastChild.appendChild(this.element);
-    itemTitleEl.addEventListener("click", (event) => {
-      modalEl.classList.add("isActive");
-      this.modifyTodoText(event, itemTitleEl);
+
+    this.element.addEventListener("click", (event) => {
+      if (event.target.className === "itemTitle") {
+        modalEl.classList.add("isActive");
+        this.modifyTodoText(event, itemTitleEl);
+        return;
+      }
+      if (event.target.className === "delBtn") {
+        this.deleteTodoItem(event);
+      }
     });
   }
 }

@@ -1,0 +1,22 @@
+{
+  "name": "1007_js-drag-and-drop",
+  "version": "1.0.0",
+  "description": "공부한 내용을 최대한 참고하여 다음을 구현하세요",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pasong0511/js-stiker-todo-list.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pasong0511/js-stiker-todo-list/issues"
+  },
+  "homepage": "https://github.com/pasong0511/js-stiker-todo-list#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

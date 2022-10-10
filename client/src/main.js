@@ -73,10 +73,6 @@ class Draggable {
       : "row";
   }
 
-  onClick(event) {
-    //오버라이딩
-  }
-
   deletePlaceholder() {
     if (this.placeholder && this.placeholder.parentNode) {
       this.placeholder.parentNode.removeChild(this.placeholder); // this.placeholder 제거
@@ -91,10 +87,13 @@ class Draggable {
     this.placeholder.classList.add("placeholder");
     this.placeholder.classList.add("draggable");
     this.placeholder.style.float = this.isVertical ? "" : "left";
+
+    //플레이스홀더 인서트
     this.element.parentNode.insertBefore(
       this.placeholder,
       this.element.nextSibling
     );
+
     this.placeholder.style.width = `${this.element.offsetWidth}px`;
     this.placeholder.style.height = `${this.element.offsetHeight}px`;
   }
@@ -113,9 +112,6 @@ class Draggable {
     this.element.style.zIndex = 2000;
     this.element.style.top = `${event.pageY - this.shiftY}px`;
     this.element.style.left = `${event.pageX - this.shiftX}px`;
-
-    // 마우스 위에 있는 스티커 무엇인지
-    // 그 스티커의 item은 목록을 가져와야함
 
     const prevEle = this.element.previousElementSibling;
     const nextEle = this.placeholder.nextElementSibling;
@@ -139,16 +135,6 @@ class Draggable {
   //드래그 이벤트 시작 -> 마우스 다운
   mouseDownHandler(event) {
     event.stopPropagation();
-
-    console.log("드래그", event.target);
-
-    // //draggable 클래스 이름만 스왑 가능
-    // if (
-    //   !nodeA.classList.contains("draggable") ||
-    //   !nodeB.classList.contains("draggable")
-    // ) {
-    //   return;
-    // }
 
     this.lastAction = "down";
 
@@ -182,9 +168,29 @@ class Draggable {
   }
 }
 
+function createTodo(text) {
+  const todo = new Todo();
+  todo.createTodoItem();
+  todo.setItemText(text);
+  return todo;
+}
+
+function createSticker(root, { id, title, color, todoList }) {
+  const sticker = new Sticker(root, id);
+  sticker.createSticker(title, color);
+  todoList.forEach((text) => sticker.add(createTodo(text)));
+  return sticker;
+}
+
+function createTrello(targetEl, dataDic = []) {
+  const trello = new Trello(targetEl);
+  dataDic.forEach((data) => trello.add(createSticker(trello, data)));
+}
+
 class Trello {
   constructor(targetEl) {
-    this.dataDic = {};
+    //this.dataDic = {};
+    this.dataDic = [];
     this.priority = [];
     this.stikerId = 0;
     this.targetStickersEl = targetEl;
@@ -196,10 +202,18 @@ class Trello {
     return this.stikerId;
   }
 
+  add(sticker) {
+    //this.dataDic[sticker.stikerId] = sticker;
+    this.dataDic.push(sticker);
+    this.targetStickersEl.scroll(this.targetStickersEl.scrollWidth, 0);
+
+    console.log("딕셔너리", this.dataDic);
+  }
+
   addSticker() {
     const sticker = new Sticker(this, this.getStickerId(), this.startPos);
     sticker.createSticker(); //스티커 생성
-    this.dataDic[this.stikerId] = sticker;
+    this.add(sticker);
   }
 
   //스티커 시작 x y 좌표, 너비, 높이 받아서 this.dataDic안의 객체 값 반환
@@ -216,14 +230,40 @@ class Trello {
     });
   }
 
-  // setPriority(key) {
-  //   console.log("우선순위");
-  //   this.priority = this.priority.filter((target) => target !== key);
-  //   this.priority.push(key);
-  //   this.priority.forEach((key, idx) => {
-  //     this.dataDic[key].element.style.zIndex = idx;
-  //   });
-  // }
+  delete(sticker) {
+    this.targetStickersEl.removeChild(sticker.element); //스티커 엘리먼트 삭제
+
+    //데이터 갱신
+    this.dataDic = Object.values(this.dataDic).filter(
+      ({ element }) => element !== sticker.element
+    );
+
+    console.log("삭제 후 딕셔너리", this.dataDic);
+  }
+
+  // 화면에 보이는 순서로 정렬해야함.
+  toJson() {
+    const sort = this.dataDic.sort(
+      (a, b) =>
+        a.element.getBoundingClientRect().x -
+        b.element.getBoundingClientRect().x
+    );
+    return {
+      dataDic: sort.map((sticker) => sticker.toJson()),
+    };
+  }
+}
+
+//랜덤 배경 생성 rgb 값
+function createColor() {
+  const r =
+    Math.floor(Math.random() * (COLOR_START - COLOR_END + 1)) + COLOR_START;
+  const g =
+    Math.floor(Math.random() * (COLOR_START - COLOR_END + 1)) + COLOR_START;
+  const b =
+    Math.floor(Math.random() * (COLOR_START - COLOR_END + 1)) + COLOR_START;
+
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 class Sticker extends Draggable {
@@ -245,25 +285,29 @@ class Sticker extends Draggable {
   //   return [rect.x, rect.y];
   // }
 
-  //랜덤 배경 생성 rgb 값
-  changeBackground() {
-    const r =
-      Math.floor(Math.random() * (COLOR_START - COLOR_END + 1)) + COLOR_START;
-    const g =
-      Math.floor(Math.random() * (COLOR_START - COLOR_END + 1)) + COLOR_START;
-    const b =
-      Math.floor(Math.random() * (COLOR_START - COLOR_END + 1)) + COLOR_START;
-
-    return `rgb(${r}, ${g}, ${b})`;
+  setStickerColor(color = createColor()) {
+    this.StickerColor = color;
+    this.element.style.background = this.StickerColor;
   }
 
-  updatePriority() {
-    //this.root.setPriority(this.stikerId);
+  findTodo(x, y) {
+    // console.log(x, y);
+    return this.todoList.find(({ element }) => {
+      const rect = element.getBoundingClientRect();
+      const [x1, y1, x2, y2] = [
+        rect.x,
+        rect.y,
+        rect.x + rect.width,
+        rect.y + rect.height,
+      ];
+      return x1 <= x && x <= x2 && y1 <= y && y <= y2;
+    });
   }
 
   //스티커 타이틀 텍스트 갱신
-  setStikerTitle(text) {
+  setStikerTitle(text = `Sticker${this.stikerId}`) {
     this.stikerTitle = text;
+    this.element.querySelector(".stickerTitle").innerText = this.stikerTitle;
   }
 
   //스티커 타이틀 수정
@@ -293,15 +337,16 @@ class Sticker extends Draggable {
   //스티커 삭제
   deleteSticker(event) {
     event.stopPropagation();
-    event.target.parentNode.parentNode.remove(); //스티커 엘리먼트 삭제
-    //스티커 root 데이터 딕셔너리에서 삭제
-    this.root.dataDic = Object.values(this.root.dataDic).filter(
-      ({ element }) => element !== event.target.parentNode.parentNode
-    );
+    this.root.delete(this);
+    // event.target.parentNode.parentNode.remove(); //스티커 엘리먼트 삭제
+    // //스티커 root 데이터 딕셔너리에서 삭제
+    // this.root.dataDic = Object.values(this.root.dataDic).filter(
+    //   ({ element }) => element !== event.target.parentNode.parentNode
+    // );
   }
 
   //스티커 엘리먼트 생성
-  createSticker() {
+  createSticker(title, color) {
     const stickerTopEl = createEl("div", "stickerTop");
     const stickerTitleEl = createEl("div", "stickerTitle");
     const listCreateBtn = createEl("button", "listCreateBtn");
@@ -309,11 +354,8 @@ class Sticker extends Draggable {
     const stickerBottomEl = createEl("ul", "stickerBottom");
 
     this.element.classList.add("draggable");
-    this.element.style.background = this.changeBackground(); //배경색 지정
+    this.setStickerColor(color); //배경색 지정
 
-    stickerTitleEl.innerText = !this.stikerTitle
-      ? `Sticker${this.stikerId}`
-      : this.stikerTitle;
     listCreateBtn.innerText = "항목 추가";
     stickerRemoveBtn.innerText = "스티커 삭제";
 
@@ -324,15 +366,18 @@ class Sticker extends Draggable {
     this.element.appendChild(stickerTopEl);
     this.element.appendChild(stickerBottomEl);
 
+    this.setStikerTitle(title);
+
     this.root.targetStickersEl.insertBefore(
       this.element,
       this.root.targetStickersEl.lastChild.previousElementSibling
     );
-    this.root.dataDic[this.stikerId] = this.element;
-    this.root.targetStickersEl.scroll(
-      this.root.targetStickersEl.scrollWidth,
-      0
-    );
+
+    //this.root.dataDic[this.stikerId] = this.element;
+    // this.root.targetStickersEl.scroll(
+    //   this.root.targetStickersEl.scrollWidth,
+    //   0
+    // );
 
     stickerTitleEl.addEventListener("click", (event) => {
       this.modifyTitleText(event, stickerTitleEl);
@@ -367,18 +412,22 @@ class Sticker extends Draggable {
       const todoItem = new Todo(this);
       todoItem.createTodoItem();
       this.add(todoItem); //객체 배열에 추가
-      this.updatePriority();
+      //this.updatePriority();
       return;
     }
 
     //제거 버튼 클릭
     if (event.target.className === "stickerRemoveBtn") {
-      this.deleteSticker(event);
+      //this.deleteSticker(event);
+      console.log(this.root);
+      this.root.delete(this);
       // this.root.delete(this)
     }
   }
 
+  //동건제작
   delete(todo) {
+    this.element.lastChild.removeChild(todo.element); //투투 아이템 엘리먼트 삭제
     this.todoList = this.todoList.filter((target) => target !== todo);
   }
 
@@ -390,25 +439,44 @@ class Sticker extends Draggable {
     this.delete(todo);
     nextSticker.add(todo);
   }
+
+  insertPlaceholder() {}
+
+  toJson() {
+    return {
+      id: this.stikerId,
+      title: this.stikerTitle,
+      color: this.StickerColor,
+      todoList: [...this.element.querySelectorAll(".itemTitle")].map(
+        (el) => el.innerText
+      ),
+    };
+  }
 }
 
 class Todo extends Draggable {
   constructor() {
     super("li", "todoItem", true); //상속받는 constructor를 호출
 
-    this.parent = null; //Sticker
+    this.parent = null; //Sticker 바라보는 클래스 변수
     this.itemText = null;
 
     this.mouseMoveHandler = this.mouseMoveHandler.bind(this);
   }
 
   setItemText(text) {
+    if (this.itemText === text) {
+      return;
+    }
     this.itemText = text;
+    this.element.firstChild.firstChild.innerText = this.itemText;
   }
 
+  //부모 재지정
   setParent(parent) {
     this.parent = parent;
-    console.log(this.isDraggingStarted);
+    // console.log(this.isDraggingStarted);
+
     if (this.isDraggingStarted) {
       this.createPlaceholder();
     }
@@ -420,12 +488,17 @@ class Todo extends Draggable {
       event.clientX,
       event.clientY
     );
-    const mySticker = this.parent;
+    const mySticker = this.parent; //부모 Sticker 클래스
 
     if (newSticker && newSticker !== mySticker) {
       mySticker.move(newSticker, this);
     }
 
+    //새로운 플레이스 홀더 위치 끼워넣기
+    const newTodo = this.parent.findTodo(event.clientX, event.clientY);
+    //console.log("새로운 투두 아이템 위치", newTodo);
+
+    //드래그 클래스 원본 mouseMoveHandler()
     super.mouseMoveHandler(event);
   }
 
@@ -475,12 +548,12 @@ class Todo extends Draggable {
   //투두 아이템 삭제
   deleteTodoItem(event) {
     event.stopPropagation();
-    event.target.parentNode.parentNode.remove(); //투투 아이템 엘리먼트 삭제
-
-    //스티커의 투두 리스트 데이터 배열에서 삭제
-    this.parent.todoList = this.parent.todoList.filter(
-      ({ element }) => element !== event.target.parentNode.parentNode
-    );
+    this.parent.delete(this);
+    // event.target.parentNode.parentNode.remove(); //투투 아이템 엘리먼트 삭제
+    // //스티커의 투두 리스트 데이터 배열에서 삭제
+    // this.parent.todoList = this.parent.todoList.filter(
+    //   ({ element }) => element !== event.target.parentNode.parentNode
+    // );
   }
 
   createTodoItem() {
@@ -490,14 +563,16 @@ class Todo extends Draggable {
     const itemTitleEl = createEl("span", "itemTitle");
 
     this.element.classList.add("draggable");
-    itemTitleEl.innerText = `${this.itemText ? this.itemText : "기본"}`;
+
     delBtn.innerText = `삭제`;
 
     itemArea.appendChild(itemTitleEl);
     itemArea.appendChild(delBtn);
     this.element.appendChild(itemArea);
+    this.setItemText("기본");
     // this.parent.element.lastChild.appendChild(this.element);
   }
+
   onClick(event) {
     if (event.target.className === "itemTitle") {
       modalEl.classList.add("isActive");
@@ -510,8 +585,78 @@ class Todo extends Draggable {
   }
 }
 
-const trello = new Trello(stickerListEl);
+function copyCreate() {
+  const test = {
+    dataDic: [
+      {
+        id: 3,
+        title: "Sticker3",
+        color: "rgb(134, 101, 121)",
+        todoList: [],
+      },
+      {
+        id: 1,
+        title: "Sticker1",
+        color: "rgb(147, 119, 123)",
+        todoList: ["기본", "기본"],
+      },
+      {
+        id: 4,
+        title: "Sticker4",
+        color: "rgb(104, 144, 119)",
+        todoList: ["기본", "기본", "기본"],
+      },
+      {
+        id: 2,
+        title: "Sticker2",
+        color: "rgb(127, 104, 110)",
+        todoList: ["기본", "기본", "기본", "기본", "기본", "기본"],
+      },
+      {
+        id: 5,
+        title: "Sticker5",
+        color: "rgb(123, 118, 110)",
+        todoList: [],
+      },
+      {
+        id: 6,
+        title: "Sticker6",
+        color: "rgb(106, 105, 114)",
+        todoList: [],
+      },
+      {
+        id: 7,
+        title: "Sticker7",
+        color: "rgb(113, 128, 108)",
+        todoList: [],
+      },
+      {
+        id: 8,
+        title: "Sticker8",
+        color: "rgb(102, 132, 103)",
+        todoList: [],
+      },
+    ],
+  };
+  let trello = null;
+  createStikerBtn.addEventListener("click", () => {
+    if (!trello) {
+      trello = createTrello(stickerListEl, test.dataDic);
+      return;
+    }
+    if (trello.dataDic.length < 8) {
+      trello.addSticker();
+      return;
+    }
+    console.log(trello.toJson());
+  });
+}
 
-createStikerBtn.addEventListener("click", () => {
-  trello.addSticker();
-});
+function newCreate() {
+  const trello = new Trello(stickerListEl);
+  createStikerBtn.addEventListener("click", () => {
+    trello.addSticker();
+  });
+}
+
+copyCreate();

@@ -27,19 +27,8 @@ function isAbove(nodeA, nodeB, isVertical = false) {
 
 // 드래그 중 엘리먼트, 이미 위치한 엘리먼트 두개의 itemlist를 변경한다.
 function swap(nodeA, nodeB) {
-  if (nodeA.parentNode !== nodeB.parentNode) {
-    return;
-  }
   const parentA = nodeA.parentNode;
   const siblingA = nodeA.nextSibling === nodeB ? nodeA : nodeA.nextSibling;
-
-  //draggable 클래스 이름만 스왑 가능
-  if (
-    !nodeA.classList.contains("draggable") ||
-    !nodeB.classList.contains("draggable")
-  ) {
-    return;
-  }
 
   //nodeB 전에  nodeA 삽입
   nodeB.parentNode.insertBefore(nodeA, nodeB);
@@ -56,7 +45,6 @@ class Draggable {
     this.isDraggingStarted = false;
     this.shiftX = 0; //드래그 엘리먼트의 마우스 현재 포지션 저장
     this.shiftY = 0;
-    this.lastAction = "";
 
     //this 바인딩 -> Draggable
     this.mouseMoveHandler = this.mouseMoveHandler.bind(this);
@@ -73,41 +61,22 @@ class Draggable {
       : "row";
   }
 
-  onClick(event) {
-    //오버라이딩
-  }
-
-  deletePlaceholder() {
-    if (this.placeholder && this.placeholder.parentNode) {
-      this.placeholder.parentNode.removeChild(this.placeholder); // this.placeholder 제거
-    }
-  }
-
-  createPlaceholder() {
-    this.deletePlaceholder();
-
-    //this.placeholder 생성
-    this.placeholder = document.createElement("div");
-    this.placeholder.classList.add("placeholder");
-    this.placeholder.classList.add("draggable");
-    this.placeholder.style.float = this.isVertical ? "" : "left";
-    this.element.parentNode.insertBefore(
-      this.placeholder,
-      this.element.nextSibling
-    );
-    this.placeholder.style.width = `${this.element.offsetWidth}px`;
-    this.placeholder.style.height = `${this.element.offsetHeight}px`;
-  }
-
   //드래그 + 마우스 움직임
   mouseMoveHandler(event) {
-    this.lastAction = "move";
     if (!this.isDraggingStarted) {
       this.isDraggingStarted = true;
 
-      this.createPlaceholder();
+      //this.placeholder 생성
+      this.placeholder = document.createElement("div");
+      this.placeholder.classList.add("placeholder");
+      this.placeholder.style.float = this.isVertical ? "" : "left";
+      this.element.parentNode.insertBefore(
+        this.placeholder,
+        this.element.nextSibling
+      );
+      this.placeholder.style.width = `${this.element.offsetWidth}px`;
+      this.placeholder.style.height = `${this.element.offsetHeight}px`;
     }
-
     //드래그 엘리먼트 위치 조정
     this.element.style.position = "fixed";
     this.element.style.zIndex = 2000;
@@ -139,19 +108,6 @@ class Draggable {
   //드래그 이벤트 시작 -> 마우스 다운
   mouseDownHandler(event) {
     event.stopPropagation();
-
-    console.log("드래그", event.target);
-
-    // //draggable 클래스 이름만 스왑 가능
-    // if (
-    //   !nodeA.classList.contains("draggable") ||
-    //   !nodeB.classList.contains("draggable")
-    // ) {
-    //   return;
-    // }
-
-    this.lastAction = "down";
-
     const clinetReact = this.element.getBoundingClientRect(); //드래그한 엘리먼트 위치 저장
     this.shiftX = event.clientX - clinetReact.x;
     this.shiftY = event.clientY - clinetReact.y;
@@ -161,15 +117,10 @@ class Draggable {
   }
 
   //드래그 이벤트 종료 -> 마우스 업
-  mouseUpHandler(e) {
-    // mousemove, mouseup 이벤트 해제
-    document.removeEventListener("mousemove", this.mouseMoveHandler);
-    document.removeEventListener("mouseup", this.mouseUpHandler);
-    if (this.lastAction === "down") {
-      return this.onClick(e);
+  mouseUpHandler() {
+    if (this.placeholder) {
+      this.placeholder.parentNode.removeChild(this.placeholder); // this.placeholder 제거
     }
-    this.lastAction = "";
-    this.deletePlaceholder();
 
     this.element.style.removeProperty("top");
     this.element.style.removeProperty("left");
@@ -179,6 +130,10 @@ class Draggable {
     this.shiftX = 0;
     this.shiftY = 0;
     this.isDraggingStarted = false;
+
+    // mousemove, mouseup 이벤트 해제
+    document.removeEventListener("mousemove", this.mouseMoveHandler);
+    document.removeEventListener("mouseup", this.mouseUpHandler);
   }
 }
 
@@ -308,7 +263,6 @@ class Sticker extends Draggable {
     const stickerRemoveBtn = createEl("button", "stickerRemoveBtn");
     const stickerBottomEl = createEl("ul", "stickerBottom");
 
-    this.element.classList.add("draggable");
     this.element.style.background = this.changeBackground(); //배경색 지정
 
     stickerTitleEl.innerText = !this.stikerTitle
@@ -338,80 +292,35 @@ class Sticker extends Draggable {
       this.modifyTitleText(event, stickerTitleEl);
     });
 
-    // //엘리먼트에 이벤트
-    // this.element.addEventListener("click", (event) => {
-    //   if (event.target.className === "listCreateBtn") {
-    //     const todoItem = new Todo(this);
-    //     todoItem.createTodoItem();
-    //     this.todoList.push(todoItem); //객체 배열에 추가
-    //     this.updatePriority();
-    //     return;
-    //   }
+    //엘리먼트에 이벤트
+    this.element.addEventListener("click", (event) => {
+      if (event.target.className === "listCreateBtn") {
+        const todoItem = new Todo(this);
+        todoItem.createTodoItem();
+        this.todoList.push(todoItem); //객체 배열에 추가
+        this.updatePriority();
+        return;
+      }
 
-    //   //제거 버튼 클릭
-    //   if (event.target.className === "stickerRemoveBtn") {
-    //     this.deleteSticker(event);
-    //   }
-    // });
+      //제거 버튼 클릭
+      if (event.target.className === "stickerRemoveBtn") {
+        this.deleteSticker(event);
+      }
+    });
     this.setVertical(false);
-  }
-
-  add(todo) {
-    this.todoList.push(todo);
-    this.element.lastChild.appendChild(todo.element);
-    todo.setParent(this);
-  }
-
-  onClick(event) {
-    if (event.target.className === "listCreateBtn") {
-      const todoItem = new Todo(this);
-      todoItem.createTodoItem();
-      this.add(todoItem); //객체 배열에 추가
-      this.updatePriority();
-      return;
-    }
-
-    //제거 버튼 클릭
-    if (event.target.className === "stickerRemoveBtn") {
-      this.deleteSticker(event);
-      // this.root.delete(this)
-    }
-  }
-
-  delete(todo) {
-    this.todoList = this.todoList.filter((target) => target !== todo);
-  }
-
-  move(nextSticker, todo) {
-    if (!this.todoList.includes(todo)) {
-      return;
-    }
-    console.log("move!");
-    this.delete(todo);
-    nextSticker.add(todo);
   }
 }
 
 class Todo extends Draggable {
-  constructor() {
+  constructor(parent) {
     super("li", "todoItem", true); //상속받는 constructor를 호출
 
-    this.parent = null; //Sticker
+    this.parent = parent; //Sticker
     this.itemText = null;
-
-    this.mouseMoveHandler = this.mouseMoveHandler.bind(this);
   }
 
   setItemText(text) {
     this.itemText = text;
-  }
-
-  setParent(parent) {
-    this.parent = parent;
-    console.log(this.isDraggingStarted);
-    if (this.isDraggingStarted) {
-      this.createPlaceholder();
-    }
   }
 
   mouseMoveHandler(event) {
@@ -419,11 +328,12 @@ class Todo extends Draggable {
     const newSticker = this.parent.root.findSticker(
       event.clientX,
       event.clientY
-    );
-    const mySticker = this.parent;
+    ).element;
+    const mySicker = this.parent.element;
 
-    if (newSticker && newSticker !== mySticker) {
-      mySticker.move(newSticker, this);
+    if (newSticker && newSticker !== mySicker) {
+      const bottom = newSticker.querySelector(".stickerBottom");
+      bottom.appendChild(this.element);
     }
 
     super.mouseMoveHandler(event);
@@ -496,17 +406,18 @@ class Todo extends Draggable {
     itemArea.appendChild(itemTitleEl);
     itemArea.appendChild(delBtn);
     this.element.appendChild(itemArea);
-    // this.parent.element.lastChild.appendChild(this.element);
-  }
-  onClick(event) {
-    if (event.target.className === "itemTitle") {
-      modalEl.classList.add("isActive");
-      this.modifyTodoText(event, this.element.querySelector(".itemTitle"));
-      return;
-    }
-    if (event.target.className === "delBtn") {
-      this.deleteTodoItem(event);
-    }
+    this.parent.element.lastChild.appendChild(this.element);
+
+    this.element.addEventListener("click", (event) => {
+      if (event.target.className === "itemTitle") {
+        modalEl.classList.add("isActive");
+        this.modifyTodoText(event, itemTitleEl);
+        return;
+      }
+      if (event.target.className === "delBtn") {
+        this.deleteTodoItem(event);
+      }
+    });
   }
 }
 

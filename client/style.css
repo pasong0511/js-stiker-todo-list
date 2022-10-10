@@ -1,3 +1,7 @@
+* {
+  user-select: none;
+}
+
 body {
   background: linear-gradient(45deg, #fdd386, #f068ab);
   margin: 0;
@@ -85,22 +89,28 @@ button {
   margin-bottom: 1rem;
 }
 
-.draggable {
-  cursor: move;
-  margin-bottom: 1rem;
-  user-select: none;
-
-  /* Center the content */
-  align-items: center;
+.todoItem {
   display: flex;
+  align-items: center;
   justify-content: center;
+  width: 250px;
+  height: 40px;
+  border-radius: 4px;
+  background-color: rgb(255, 255, 255);
+  cursor: move;
+  z-index: 1;
+}
 
-  /* Size */
-  height: 4rem;
-  width: 16rem;
+.itemArea {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
 
-  /* Misc */
-  border: 1px solid #cbd5e0;
+.itemTitle {
+  /* padding-right: 100px; */
 }
 
 #modal {

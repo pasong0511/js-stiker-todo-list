@@ -275,15 +275,6 @@ class Sticker extends Draggable {
     this.StickerColor = "";
     this.todoList = [];
   }
-  // save() {
-  //   return {
-  //     postition: this.getPosition(),
-  //   };
-  // }
-  // getPosition() {
-  //   const rect = this.element.getClientRects();
-  //   return [rect.x, rect.y];
-  // }
 
   setStickerColor(color = createColor()) {
     this.StickerColor = color;
